@@ -5,7 +5,7 @@ window.WebSocket = window.WebSocket || window.MozWebSocket;
 
 // if browser doesn't support WebSocket, just show some notification and exit
 if (!window.WebSocket) {
-	// chyba
+	alert('asi stary browser. nevi to websocket');
 }
 
 // open connection
@@ -14,7 +14,7 @@ var connection = new WebSocket('ws://127.0.0.1:1337');
 connection.onerror = function (error) {
 	// just in there were some problems with conenction...
 	// zas chyba
-	alert('chyba');
+	alert('chyba s pripojenim k socketu (nieco sa dojebalo)');
 };
 
 
@@ -32,6 +32,7 @@ goog.require('lime.animation.Spawn');
 goog.require('lime.animation.FadeTo');
 goog.require('lime.animation.ScaleTo');
 goog.require('lime.animation.MoveTo');
+goog.require('lime.animation.MoveBy');
 
 goog.require('goog.events.KeyCodes');
  
@@ -41,15 +42,23 @@ totalroyal.start = function(){
 	var director = new lime.Director(document.body,1024,768),
 	scene = new lime.Scene();
 
-	var playerOneTarget = new lime.Layer().setPosition(512,384);
-	var playerOne = new lime.Circle().setSize(150,150).setFill(255,150,0);
-   
-	//add circle and label to target object
+	var playerOneTarget = new lime.Layer().setPosition(40,384);
+	var playerOne = new lime.Circle().setSize(50,50).setFill(255,150,0);
 	playerOneTarget.appendChild(playerOne);
-    
-	//add target and title to the scene
 	scene.appendChild(playerOneTarget);
-    
+	
+	var maxShots = 10;
+	var playerOneRockets = [];
+	
+	var templ = {
+		target : new lime.Layer(),
+		rocket : new lime.Circle().setSize(10,10).setFill(40,40,0)
+	};
+	
+	for (var i=1; i<=maxShots; i++) {
+		playerOneRockets.push(templ); 
+	}
+	
 	director.makeMobileWebAppCapable();
 
 	//add some interaction
@@ -67,10 +76,23 @@ totalroyal.start = function(){
 			var msg = 'p1-'+newY;
 			connection.send(msg);
 		}
+		
+		if (e.keyCode == goog.events.KeyCodes.ENTER) {
+			for (var i in playerOneRockets) {
+				pOnePos = playerOneTarget.getPosition();
+				
+				playerOneRockets[i].target.setPosition(pOnePos.x,pOnePos.y);
+				playerOneRockets[i].target.appendChild(playerOneRockets[i].rocket);
+				scene.appendChild(playerOneRockets[i].target);
+				
+				var moveright = new lime.animation.MoveBy(+200,0).setSpeed(1);
+				
+				playerOneRockets[i].target.runAction(moveright);
+			}
+		}
 	});
 	
 	 connection.onmessage = function (message) {
-		 
 		 var data = JSON.parse(message.data).data;
 		 var d = data.split('-');
 		 var player = d[0];
